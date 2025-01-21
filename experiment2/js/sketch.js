@@ -1,30 +1,12 @@
 // sketch.js - purpose and description here
-// Author: Your Name
+// Author: Marvel McDowell 
 // Date:
-
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
-
-// Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
-const VALUE1 = 1;
-const VALUE2 = 2;
+//Code adapted from https://openprocessing.org/sketch/2223231
 
 // Globals
-let myInstance;
 let canvasContainer;
 var centerHorz, centerVert;
-
-class MyClass {
-    constructor(param1, param2) {
-        this.property1 = param1;
-        this.property2 = param2;
-    }
-
-    myMethod() {
-        // code to run when method is called
-    }
-}
+var speed;
 
 function resizeScreen() {
   centerHorz = canvasContainer.width() / 2; // Adjusted for drawing logic
@@ -41,9 +23,9 @@ function setup() {
   let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
   canvas.parent("canvas-container");
   // resize canvas is the page is resized
+  speed = createSlider(0,2,0.5,0.01);
+	speed.position(0,0);
 
-  // create an instance of the class
-  myInstance = new MyClass("VALUE1", "VALUE2");
 
   $(window).resize(function() {
     resizeScreen();
@@ -51,29 +33,101 @@ function setup() {
   resizeScreen();
 }
 
-// draw() function is called repeatedly, it's the main animation loop
-function draw() {
-  background(220);    
-  // call a method on the instance
-  myInstance.myMethod();
-
-  // Set up rotation for the rectangle
-  push(); // Save the current drawing context
-  translate(centerHorz, centerVert); // Move the origin to the rectangle's center
-  rotate(frameCount / 100.0); // Rotate by frameCount to animate the rotation
-  fill(234, 31, 81);
-  noStroke();
-  rect(-125, -125, 250, 250); // Draw the rectangle centered on the new origin
-  pop(); // Restore the original drawing context
-
-  // The text is not affected by the translate and rotate
-  fill(255);
-  textStyle(BOLD);
-  textSize(140);
-  text("p5*", centerHorz - 105, centerVert + 40);
+class Ball {
+	constructor(ballX = 0, ballY = 0, speedX = 0, speedY = 0, drag = 0, bounciness = 1, gravity = 1) {
+		this.ballX = ballX;
+		this.ballY = ballY;
+		this.speedX = speedX;
+		this.speedY = speedY;
+		this.drag = drag;
+		this.bounciness = bounciness;
+		this.gravity = gravity;
+	}
+	draw() {
+		noStroke();
+		fill("white");
+		circle(this.ballX,this.ballY,10);
+	}
+	tick(time = 1) {
+		//Move Ball
+		this.ballX += this.speedX * time;
+		this.ballY += this.speedY * time;
+		//Air Drag Ball
+		if (this.speedX > 0) {
+			this.speedX -= this.drag * time;
+		}
+		else if (this.speedX < 0) {
+			this.speedX += this.drag * time;
+		}
+		if (this.speedY < 0) {
+			this.speedY += this.drag * time;
+		}
+		//Gravity Ball
+		if (this.ballY < height-1) {
+			this.speedY += this.gravity * time;
+		}
+		//Bounce Ball
+		if (this.ballX < 0) {
+			this.ballX = 0;
+			if (this.speedX < 0) {
+				this.speedX = -this.speedX*this.bounciness;
+			}
+		}
+		else if (this.ballX > width) {
+			this.ballX = width;
+			if (this.speedX > 0) {
+				this.speedX = -this.speedX*this.bounciness;
+			}
+		}
+		if (this.ballY > height) {
+			this.ballY = height;
+			if (this.speedY > 0) {
+				this.speedY = -this.speedY*this.bounciness;
+			}
+		}
+		else if (this.ballY < 0) {
+			this.ballY = 0;
+			if (this.speedY < 0) {
+				this.speedY = -this.speedY*this.bounciness;
+			}
+		}
+	}
 }
 
-// mousePressed() function is called once after every time a mouse button is pressed
+var balls = [];
+
+var originalX = -1;
+var originalY = -1;
+
 function mousePressed() {
-    // code to run when mouse is pressed
+	originalX = mouseX;
+	originalY = mouseY;
+	describe("A new ball is being created.");
 }
+
+function mouseReleased() {
+	balls.push(new Ball(originalX,originalY,mouseX-originalX,mouseY-originalY,0.05,0.8,1));
+	originalX = -1;
+	originalY = -1;
+	describe("A new ball was created at (${mouseX},${mouseY})");
+}
+
+function draw() {
+	background("black");
+	if (originalX != -1 && originalY != -1) {
+		stroke("white");
+		strokeWeight(1);
+		line(originalX,originalY,mouseX,mouseY);
+		strokeWeight(5);
+		point(originalX,originalY);
+		describe("There are ${balls.length} balls bouncing in a box. A new ball is being created with a speed of (${mouseX-originalX},${mouseY-originalY}).");
+	}
+	else {
+		describe("There are ${balls.length} balls bouncing in a box.");
+	}
+	for (var ball in balls) {
+		balls[ball].draw();
+		balls[ball].tick(speed.value());
+	}
+}
+
