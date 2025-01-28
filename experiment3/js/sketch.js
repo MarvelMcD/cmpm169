@@ -3,7 +3,6 @@
 // Date: 1/27/25
 // Original Code adapted from https://openprocessing.org/sketch/917039  
 
-
 // Globals
 let flock;
 let gui;
@@ -18,6 +17,31 @@ let SeparationMultiplier = new SliderVariable("Separation", 4, 0, 4, 0.1);
 let AlignmentMultiplier = new SliderVariable("Alignment", 0.5, 0, 2, 0.1);
 let CohesionMultiplier = new SliderVariable("Cohesion", 0.5, 0, 2, 0.1);
 let SeekMultiplier = new SliderVariable("TargetPosTrack", 1.5, 0, 2, 0.1);
+
+// SliderVariable Class
+class SliderVariable {
+  constructor(label, value, min, max, step) {
+    this.label = label;
+    this.value = value;
+    this.min = min;
+    this.max = max;
+    this.step = step;
+    this.slider = createSlider(min, max, value, step);
+    this.slider.position(10, 10); // Adjust as needed
+    this.slider.style('width', '200px'); // Adjust as needed
+  }
+
+  getValue() {
+    return this.slider.value();
+  }
+
+  draw() {
+    fill(0);
+    noStroke();
+    textSize(12);
+    text(`${this.label}: ${this.getValue()}`, this.slider.x * 2 + this.slider.width, this.slider.y + 15);
+  }
+}
 
 // Utility functions
 function createCols(_url) {
