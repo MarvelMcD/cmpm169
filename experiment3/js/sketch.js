@@ -1,79 +1,96 @@
 // sketch.js - purpose and description here
-// Author: Your Name
-// Date:
+// Author: Marvel McDowell
+// Date: 1/27/25
+// Original Code adapted from https://openprocessing.org/sketch/917039  
 
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
-
-// Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
-const VALUE1 = 1;
-const VALUE2 = 2;
 
 // Globals
-let myInstance;
+let flock;
+let gui;
 let canvasContainer;
-var centerHorz, centerVert;
+let centerHorz, centerVert;
+let lapse = 0;
 
-class MyClass {
-    constructor(param1, param2) {
-        this.property1 = param1;
-        this.property2 = param2;
-    }
+const COL = createCols("https://coolors.co/cb3828-ba9836-cc7700-dbac00-bf731d");
+const BOIDSNUM = 100;
 
-    myMethod() {
-        // code to run when method is called
-    }
+let SeparationMultiplier = new SliderVariable("Separation", 4, 0, 4, 0.1);
+let AlignmentMultiplier = new SliderVariable("Alignment", 0.5, 0, 2, 0.1);
+let CohesionMultiplier = new SliderVariable("Cohesion", 0.5, 0, 2, 0.1);
+let SeekMultiplier = new SliderVariable("TargetPosTrack", 1.5, 0, 2, 0.1);
+
+// Utility functions
+function createCols(_url) {
+  let slash_index = _url.lastIndexOf("/");
+  let pallate_str = _url.slice(slash_index + 1);
+  let arr = pallate_str.split("-");
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = "#" + arr[i];
+  }
+  return arr;
 }
 
 function resizeScreen() {
-  centerHorz = canvasContainer.width() / 2; // Adjusted for drawing logic
-  centerVert = canvasContainer.height() / 2; // Adjusted for drawing logic
+  centerHorz = canvasContainer.width() / 2;
+  centerVert = canvasContainer.height() / 2;
   console.log("Resizing...");
   resizeCanvas(canvasContainer.width(), canvasContainer.height());
-  // redrawCanvas(); // Redraw everything based on new size
+  flock.setTarget(centerHorz, centerVert);
 }
 
-// setup() function is called once when the program starts
+// Setup function
 function setup() {
-  // place our canvas, making it fit our container
+  // Set up canvas container
   canvasContainer = $("#canvas-container");
   let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
   canvas.parent("canvas-container");
-  // resize canvas is the page is resized
 
-  // create an instance of the class
-  myInstance = new MyClass("VALUE1", "VALUE2");
+  // Initialize flock and GUI
+  flock = new Flock();
+  for (let i = 0; i < BOIDSNUM; i++) {
+    let b = new Boid(width / 2, height / 2, COL[int(random(COL.length))]);
+    flock.addBoid(b);
+  }
+  flock.setTarget(width / 2, height / 2);
 
-  $(window).resize(function() {
+  gui = new GUI(0, 0);
+  gui.addSliders([SeparationMultiplier, AlignmentMultiplier, CohesionMultiplier, SeekMultiplier]);
+
+  // Handle window resizing
+  $(window).resize(function () {
     resizeScreen();
   });
   resizeScreen();
 }
 
-// draw() function is called repeatedly, it's the main animation loop
+// Draw function
 function draw() {
-  background(220);    
-  // call a method on the instance
-  myInstance.myMethod();
+  background(220);
+
+  // Update flock and GUI
+  flock.run();
+  gui.update();
 
   // Set up rotation for the rectangle
-  push(); // Save the current drawing context
-  translate(centerHorz, centerVert); // Move the origin to the rectangle's center
-  rotate(frameCount / 100.0); // Rotate by frameCount to animate the rotation
+  push();
+  translate(centerHorz, centerVert);
+  rotate(frameCount / 100.0);
   fill(234, 31, 81);
   noStroke();
-  rect(-125, -125, 250, 250); // Draw the rectangle centered on the new origin
-  pop(); // Restore the original drawing context
+  rect(-125, -125, 250, 250);
+  pop();
 
-  // The text is not affected by the translate and rotate
+  // Draw text
   fill(255);
   textStyle(BOLD);
   textSize(140);
   text("p5*", centerHorz - 105, centerVert + 40);
 }
 
-// mousePressed() function is called once after every time a mouse button is pressed
+// Mouse pressed function
 function mousePressed() {
-    // code to run when mouse is pressed
+  if (millis() - lapse > 500) {
+    save("pix.jpg");
+    lapse = millis();
+  }
 }
