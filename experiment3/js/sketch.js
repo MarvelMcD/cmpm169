@@ -3,7 +3,7 @@
 // Date: 1/27/25
 // Original Code adapted from https://openprocessing.org/sketch/917039  
 
-// GUI and SliderVariable
+// SliderVariable class definition
 class SliderVariable {
   constructor(label, value, min, max, step) {
     this.label = label;
@@ -11,6 +11,7 @@ class SliderVariable {
     this.min = min;
     this.max = max;
     this.step = step;
+    this.y = 10;  // Initial Y position for displaying sliders
   }
 
   display() {
@@ -22,6 +23,7 @@ class SliderVariable {
   }
 }
 
+// GUI class to manage the sliders
 class GUI {
   constructor(x, y) {
     this.sliders = [];
@@ -175,6 +177,26 @@ class Boid {
   }
 }
 
+// BoidType2 class that extends Boid and is attracted to the mouse
+class BoidType2 extends Boid {
+  constructor(x, y, col) {
+    super(x, y, col);
+    this.maxspeed = 2; // Slower speed for this type
+  }
+
+  flock(boids) {
+    let sep = this.separate(boids).mult(SeparationMultiplier.value);
+    let ali = this.align(boids).mult(AlignmentMultiplier.value);
+    let coh = this.cohesion(boids).mult(CohesionMultiplier.value);
+    let seek = this.seek(createVector(mouseX, mouseY)).mult(SeekMultiplier.value); // Attracted to mouse position
+
+    this.applyForce(sep);
+    this.applyForce(ali);
+    this.applyForce(coh);
+    this.applyForce(seek);
+  }
+}
+
 // Flock class
 class Flock {
   constructor() {
@@ -198,10 +220,12 @@ class Flock {
 }
 
 // Main script
-const COL = createCols("https://coolors.co/cb3828-ba9836-cc7700-dbac00-bf731d");
+const COL1 = createCols("https://coolors.co/0d0221-0f084b-26408b-a6cfd5-c2e7d9"); // Swarm 1 colors
+const COL2 = createCols("https://coolors.co/660000-990033-5f021f-8c001a-ff9000"); // Swarm 2 colors
 const BOIDSNUM = 100;
 let lapse = 0;
 let flock;
+let avoidFlock;
 let bg;
 let gui;
 let SeparationMultiplier = new SliderVariable("Separation", 4, 0, 4, 0.1);
@@ -209,60 +233,53 @@ let AlignmentMultiplier = new SliderVariable("Alignment", 0.5, 0, 2, 0.1);
 let CohesionMultiplier = new SliderVariable("Cohesion", 0.5, 0, 2, 0.1);
 let SeekMultiplier = new SliderVariable("TargetPosTrack", 1.5, 0, 2, 0.1);
 
-// Resize screen function
-function resizeScreen() {
-  centerHorz = canvasContainer.width() / 2;
-  centerVert = canvasContainer.height() / 2;
-  console.log("Resizing...");
-  resizeCanvas(canvasContainer.width(), canvasContainer.height());
-}
-
-// Setup function
 function setup() {
-  // Set up canvas container
-  canvasContainer = $("#canvas-container");
-  let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
-  canvas.parent("canvas-container");
+  createCanvas(1112, 834);
+  background(0);
+  bg = createGraphics(width, height);
+  bg.background(0, 10);
+  bg.noStroke();
+  for (let i = 0; i < 300000; i++) {
+    let x = random(width);
+    let y = random(height);
+    let s = noise(x * 0.01, y * 0.01) * 2;
+    bg.fill(0, 10);
+    bg.rect(x, y, s, s);
+  }
 
-  // Create a speed slider
-  speed = createSlider(0, 2, 0.5, 0.01);
-  speed.position(10, 10);  // Adjust the position of the slider on the screen
-
-  // Create flock of boids
   flock = new Flock();
   for (let i = 0; i < BOIDSNUM; i++) {
-    let b = new Boid(width / 2, height / 2, COL[int(random(COL.length))]);
+    let b = new Boid(width / 2, height / 2, COL1[int(random(COL1.length))]);
     flock.addBoid(b);
   }
-  flock.setTarget(width / 2, height / 2);
 
-  // Initialize GUI with sliders
+  avoidFlock = new Flock();
+  for (let i = 0; i < BOIDSNUM; i++) {
+    let b = new BoidType2(width / 2, height / 2, COL2[int(random(COL2.length))]);
+    avoidFlock.addBoid(b);
+  }
+
+  flock.setTarget(width / 2, height / 2);
+  avoidFlock.setTarget(width / 2, height / 2);
   gui = new GUI(0, 0);
   gui.addSliders([SeparationMultiplier, AlignmentMultiplier, CohesionMultiplier, SeekMultiplier]);
-
-  // Handle window resizing
-  $(window).resize(function () {
-    resizeScreen();
-  });
-
-  resizeScreen();
 }
 
-// Draw function
 function draw() {
   if (frameCount % 120 == 0) {
     const x = random(width);
     const y = random(height);
     flock.setTarget(x, y);
+    avoidFlock.setTarget(x, y);
   }
-
   image(bg, 0, 0);
 
   flock.run();
+  avoidFlock.run();
+
   gui.update();
 }
 
-// Mouse pressed function
 function mousePressed() {
   if (millis() - lapse > 500) {
     save("pix.jpg");
@@ -270,7 +287,6 @@ function mousePressed() {
   }
 }
 
-// Utility function to create color palette
 function createCols(_url) {
   let slash_index = _url.lastIndexOf("/");
   let pallate_str = _url.slice(slash_index + 1);
