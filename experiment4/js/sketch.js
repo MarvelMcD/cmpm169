@@ -2,7 +2,7 @@
 // Author: Your Name
 // Date:
 
-// Code adapted from https://openprocessing.org/sketch/1763456
+// Code adapted from https://openprocessing.org/sketch/2225629
 
 // Here is how you might set up an OOP p5.js project
 // Note that p5.js looks for a file called sketch.js
@@ -10,114 +10,160 @@
 // Constants - User-servicable parts
 // In a longer project I like to put these in a separate file
 
-const QFACTOR = 1;
-const SCALE_FACTOR = 1;
-const COLOR = true;
-const BOTH_IMAGES = false;
-
-let img;
-
-function preload() {
-	//img = loadImage(FILE_NAME);
-	capture = createCapture(VIDEO);
-  capture.size(640, 480);
-	img = createImage(640, 480);
-}
-
-function setup() {
-	//if (BOTH_IMAGES)
-		//createCanvas(img.width * SCALE_FACTOR * 2, img.height * SCALE_FACTOR);
-	//else
-		createCanvas(img.width * SCALE_FACTOR, img.height * SCALE_FACTOR);
+const bayer_matrix = {
+	2: [[ -0.5 ,  0    ],
+		[  0.25, -0.25 ]],
 	
-	capture.hide();
-}
-
-function draw() {
-	background(255);
-	img.loadPixels();
-	capture.loadPixels();
-	for (let x = 0; x < img.width; x++) {
-			for (let y = 0; y < img.height; y++) {
-				let i = y * img.width + x;
-				img.pixels[4 * i] = capture.pixels[4 * i];
-				img.pixels[4 * i + 1] = capture.pixels[4 * i + 1];
-				img.pixels[4 * i + 2] = capture.pixels[4 * i + 2];
-				img.pixels[4 * i + 3] = 255;
-			}
-	}
-	img.updatePixels();
-	//print(img.pixels[0]);
-	updateImagePixels();
-	image(img, 0, 0);
-}
-
-function updateImagePixels() {
-	if (BOTH_IMAGES)
-		image(img, 0, 0, img.width * SCALE_FACTOR, img.height * SCALE_FACTOR);
-	img.loadPixels();
-	for (let y = 0; y < img.height; y++) {
-		for (let x = 0; x < img.width; x++) {
-			let oldR = img.pixels[redIndex(x, y)];
-			let oldG = img.pixels[greenIndex(x, y)];
-			let oldB = img.pixels[blueIndex(x, y)];
-			let newR = quantization(oldR);
-			let newG = quantization(oldG);
-			let newB = quantization(oldB);
-			if (COLOR)
-				setPixel(x, y, newR, newG, newB);
-			else
-				setPixelGray(x, y, newR, newG, newB);
-			
-			let errR = oldR - newR;
-			let errG = oldG - newG;
-			let errB = oldB - newB;
-			addError(x + 1, y    , errR, errG, errB, 7 / 16);
-			addError(x - 1, y + 1, errR, errG, errB, 3 / 16);
-			addError(x    , y + 1, errR, errG, errB, 4 / 16);
-			addError(x + 1, y + 1, errR, errG, errB, 1 / 16);
-		}
-	}
-	img.updatePixels();
-	/*if (BOTH_IMAGES)
-		image(img, img.width * SCALE_FACTOR, 0, img.width * SCALE_FACTOR, img.height * SCALE_FACTOR);
+	4: [[ -0.5   ,  0     , -0.375 ,  0.125  ],
+		[  0.25  , -0.25  ,  0.375 , -0.125  ],
+		[ -0.3125,  0.1875, -0.4375,  0.0625 ],
+		[  0.4375, -0.0625,  0.3125, -0.1875 ]],
+  
+	8: [[-0.5, 0.0, -0.375, 0.125, -0.46875, 0.03125, -0.34375, 0.15625],
+		[0.25, -0.25, 0.375, -0.125, 0.28125, -0.21875, 0.40625, -0.09375],
+		[-0.3125, 0.1875, -0.4375, 0.0625, -0.28125, 0.21875, -0.40625, 0.09375],
+		[0.4375, -0.0625, 0.3125, -0.1875, 0.46875, -0.03125, 0.34375, -0.15625],
+		[-0.453125,
+	0.046875,
+	-0.328125,
+	0.171875,
+	-0.484375,
+	0.015625,
+	-0.359375,
+	0.140625],
+		[0.296875,
+	-0.203125,
+	0.421875,
+	-0.078125,
+	0.265625,
+	-0.234375,
+	0.390625,
+	-0.109375],
+		[-0.265625,
+	0.234375,
+	-0.390625,
+	0.109375,
+	-0.296875,
+	0.203125,
+	-0.421875,
+	0.078125],
+		[0.484375,
+	-0.015625,
+	0.359375,
+	-0.140625,
+	0.453125,
+	-0.046875,
+	0.328125,
+	-0.171875]],
+  } 
+  
+  const w = 640
+  const h = 480
+  let cap, bayer_r_slider, bayer_threshold_slider, bayer_n_selector, color_mode_selector
+  
+  function setup() {
+	createCanvas(w, h)
+	noStroke()
+	textAlign(RIGHT)
+	
+	cap = createCapture(VIDEO, {flipped: true})
+	cap.size(w, h)
+	cap.hide()
+	  
+	bayer_r_slider = createSlider(0, 512, 96)
+	bayer_r_slider.position(4, 3)
+	bayer_r_slider.size(w - 35)
+	
+	bayer_threshold_slider = createSlider(0, 255, 128)
+	bayer_threshold_slider.position(4, 30)
+	bayer_threshold_slider.size(w - 35)
+	
+	bayer_n_selector = createSelect()
+	bayer_n_selector.position(6, 60)
+	bayer_n_selector.option(2)
+	bayer_n_selector.option(4)
+	bayer_n_selector.option(8)
+	bayer_n_selector.selected(4)
+	
+	color_mode_selector = createSelect()
+	color_mode_selector.position(56, 60)
+	  color_mode_selector.option('CIELAB')
+	color_mode_selector.option('HSI')
+	color_mode_selector.option('HSL')
+	color_mode_selector.option('HSV')
+	color_mode_selector.option("Y'CbCr")
+	color_mode_selector.selected('CIELAB')
+  
+	describe('Play with Bayer dithering options over live webcam')
+  }
+  
+  function lum(r, g, b) {
+	return 0.2126*r + 0.7152*g + 0.0722*b
+  }
+  
+  function lin(v) {
+	if ( v <= 0.04045 * 255 )
+	  return v / 12.92;
 	else
-	  image(img, 0, 0, img.width * SCALE_FACTOR, img.height * SCALE_FACTOR);*/
-}
-
-function quantization(old) {
-	return 255 / QFACTOR * round(QFACTOR * old / 255);
-}
-
-function redIndex(x, y) {
-	return 4 * (img.width * y + x);
-}
-
-function greenIndex(x, y) {
-	return 4 * (img.width * y + x) + 1;
-}
-
-function blueIndex(x, y) {
-	return 4 * (img.width * y + x) + 2;
-}
-
-function setPixel(x, y, r, g, b) {
-	img.pixels[redIndex(x, y)] = r;
-	img.pixels[greenIndex(x, y)] = g;
-	img.pixels[blueIndex(x, y)] = b;
-}
-
-function setPixelGray(x, y, r, g, b) {
-	let gray = quantization((r + g + b) / 3);
-	setPixel(x, y, gray, gray, gray);
-}
-
-function addError(x, y, r, g, b, scale) {
-	img.pixels[redIndex(x, y)] += scale * r;
-	img.pixels[greenIndex(x, y)] += scale * g;
-	img.pixels[blueIndex(x, y)] += scale * b;
-}
-
-function getPixel(x, y) {
-	return img.pixels[redIndex(x, y)];
-}
+	  return pow(((v/255+0.055)/1.055), 2.4) * 255
+  }
+  
+  function Lstar(r, g, b) {
+	let Y = lum(lin(r), lin(g), lin(b))
+	if (Y <= 216 / 24389 * 255)
+	  return Y * 24.389 / 27
+	else
+	  return (pow(Y / 255, 1/3)*1.16-0.16) * 255
+  }
+  
+  function draw() {
+	cap.loadPixels()
+	const bayer_r = bayer_r_slider.value()
+	const bayer_threshold = bayer_threshold_slider.value()
+	const bayer_n = bayer_n_selector.selected()
+	const color_mode = color_mode_selector.selected()
+	let i, r, g, b, mono, bayer_value
+		
+	for (let x = 0; x < w; x++)
+	  for (let y = 0; y < h; y++) {
+		i = (x+y*w) * 4
+		r = cap.pixels[i]
+		g = cap.pixels[i + 1]
+		b = cap.pixels[i + 2]
+  
+		// https://stackoverflow.com/a/56678483/664456
+		if (color_mode == 'CIELAB')
+		  mono = Lstar(r, g, b)
+		else if (color_mode == "Y'CbCr")
+		  mono = lum(r, g, b)
+		else if (color_mode == 'HSV')
+		  mono = max(r, g, b)
+		else if (color_mode == 'HSL')
+		  mono = (max(r, g, b)+min(r, g, b)) / 2
+		else  // 'HSI'
+		  mono = (r + g + b) / 3
+		
+		bayer_value = bayer_matrix[bayer_n][y % bayer_n][x % bayer_n]
+		if (mono + bayer_r*bayer_value >= bayer_threshold) {
+		  r = 237
+		  g = 230
+		  b = 205
+		} else {
+		  r = 33
+		  g = 38
+		  b = 63
+		}
+		cap.pixels[i] = r
+		cap.pixels[i + 1] = g
+		cap.pixels[i + 2] = b
+	  }
+	
+	cap.updatePixels()
+	image(cap, 0, 0)
+	fill(255)
+	rect(w - 25, 22 - 15, 21, 15)
+	rect(w - 25, 49 - 15, 21, 15)
+	fill(0)
+	text(bayer_r, w - 5, 19)
+	text(bayer_threshold, w - 5, 46)
+  }
