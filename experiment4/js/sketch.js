@@ -28,37 +28,54 @@ let bayerNSelector, colorModeSelector;
 let bayerR = 50;
 let bayerThreshold = 100;
 
+let micButton;
+
 function setup() {
-	createCanvas(w, h).parent('#canvas-container'); // Attach the canvas to the container
-	noStroke();
-	textAlign(RIGHT);
+    createCanvas(w, h).parent('#canvas-container'); // Attach the canvas to the container
+    noStroke();
+    textAlign(RIGHT);
 
-	cap = createCapture(VIDEO, { flipped: true });
-	cap.size(w, h);
-	cap.hide();
+    // Create a button to start the microphone
+    micButton = createButton('Start Microphone');
+    micButton.position(10, 10);
+    micButton.mousePressed(startMic); // Attach event handler
 
-	// Setup microphone input
-	mic = new p5.AudioIn(); 
-	mic.start();
+    // Setup video capture
+    cap = createCapture(VIDEO, { flipped: true });
+    cap.size(w, h);
+    cap.hide();
 
-	bayerNSelector = createSelect();
-	bayerNSelector.position(6, 60);
-	bayerNSelector.option(2);
-	bayerNSelector.option(4);
-	bayerNSelector.option(8);
-	bayerNSelector.selected(4);
+    // Set up selectors
+    bayerNSelector = createSelect();
+    bayerNSelector.position(6, 60);
+    bayerNSelector.option(2);
+    bayerNSelector.option(4);
+    bayerNSelector.option(8);
+    bayerNSelector.selected(4);
 
-	colorModeSelector = createSelect();
-	colorModeSelector.position(56, 60);
-	colorModeSelector.option('CIELAB');
-	colorModeSelector.option('HSI');
-	colorModeSelector.option('HSL');
-	colorModeSelector.option('HSV');
-	colorModeSelector.option("Y'CbCr");
-	colorModeSelector.selected('CIELAB');
+    colorModeSelector = createSelect();
+    colorModeSelector.position(56, 60);
+    colorModeSelector.option('CIELAB');
+    colorModeSelector.option('HSI');
+    colorModeSelector.option('HSL');
+    colorModeSelector.option('HSV');
+    colorModeSelector.option("Y'CbCr");
+    colorModeSelector.selected('CIELAB');
 
-	describe('Play with Bayer dithering options over live webcam, reacting to sound');
+    describe('Play with Bayer dithering options over live webcam, reacting to sound');
 }
+
+function startMic() {
+    // Ensure the audio context is resumed and the mic is started
+    getAudioContext().resume().then(() => {
+        mic = new p5.AudioIn();
+        mic.start(); // Start the mic input
+        micButton.hide(); // Hide the button once microphone starts
+    });
+}
+
+
+
 
 
 function lum(r, g, b) {
