@@ -66,13 +66,16 @@ function setup() {
 }
 
 function startMic() {
-    // Ensure the audio context is resumed and the mic is started
+    // Ensure the audio context is resumed (needed in modern browsers)
     getAudioContext().resume().then(() => {
         mic = new p5.AudioIn();
-        mic.start(); // Start the mic input
+        mic.start();  // Start the microphone input
         micButton.hide(); // Hide the button once microphone starts
+    }).catch((err) => {
+        console.error('Audio context failed to resume:', err);
     });
 }
+
 
 
 
