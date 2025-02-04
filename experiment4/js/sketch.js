@@ -29,7 +29,7 @@ let bayer_r = 50;
 let bayer_threshold = 100;
 
 function setup() {
-	createCanvas(w, h);
+	createCanvas(w, h).parent('#canvas-container'); // Attach the canvas to the container
 	noStroke();
 	textAlign(RIGHT);
 
@@ -59,6 +59,7 @@ function setup() {
 
 	describe('Play with Bayer dithering options over live webcam, reacting to sound');
 }
+
 
 function lum(r, g, b) {
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
