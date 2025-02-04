@@ -2,7 +2,7 @@
 // Author: Marvel McDowell
 // Date: 2.3.2025
 // Code adapted from https://openprocessing.org/sketch/2225629
-const bayer_matrix = {
+const bayerMatrix = {  
 	2: [[ -0.5 ,  0    ],
 		[  0.25, -0.25 ]],
 	
@@ -24,9 +24,9 @@ const bayer_matrix = {
 const w = 640;
 const h = 480;
 let cap, mic, amplitude;
-let bayer_n_selector, color_mode_selector;
-let bayer_r = 50;
-let bayer_threshold = 100;
+let bayerNSelector, colorModeSelector;
+let bayerR = 50;
+let bayerThreshold = 100;
 
 function setup() {
 	createCanvas(w, h).parent('#canvas-container'); // Attach the canvas to the container
@@ -38,24 +38,24 @@ function setup() {
 	cap.hide();
 
 	// Setup microphone input
-	mic = new p5.AudioIn();
+	mic = new p5.AudioIn(); 
 	mic.start();
 
-	bayer_n_selector = createSelect();
-	bayer_n_selector.position(6, 60);
-	bayer_n_selector.option(2);
-	bayer_n_selector.option(4);
-	bayer_n_selector.option(8);
-	bayer_n_selector.selected(4);
+	bayerNSelector = createSelect();
+	bayerNSelector.position(6, 60);
+	bayerNSelector.option(2);
+	bayerNSelector.option(4);
+	bayerNSelector.option(8);
+	bayerNSelector.selected(4);
 
-	color_mode_selector = createSelect();
-	color_mode_selector.position(56, 60);
-	color_mode_selector.option('CIELAB');
-	color_mode_selector.option('HSI');
-	color_mode_selector.option('HSL');
-	color_mode_selector.option('HSV');
-	color_mode_selector.option("Y'CbCr");
-	color_mode_selector.selected('CIELAB');
+	colorModeSelector = createSelect();
+	colorModeSelector.position(56, 60);
+	colorModeSelector.option('CIELAB');
+	colorModeSelector.option('HSI');
+	colorModeSelector.option('HSL');
+	colorModeSelector.option('HSV');
+	colorModeSelector.option("Y'CbCr");
+	colorModeSelector.selected('CIELAB');
 
 	describe('Play with Bayer dithering options over live webcam, reacting to sound');
 }
@@ -79,13 +79,13 @@ function Lstar(r, g, b) {
 function draw() {
 	// Get sound level and use it to modify parameters
 	let soundLevel = mic.getLevel(); // 0.0 - 1.0
-	bayer_r = lerp(bayer_r, map(soundLevel, 0, 1, 50, 400), 0.1);
-	bayer_threshold = lerp(bayer_threshold, map(soundLevel, 0, 1, 100, 200), 0.1);
+	bayerR = lerp(bayerR, map(soundLevel, 0, 1, 50, 400), 0.1);
+	bayerThreshold = lerp(bayerThreshold, map(soundLevel, 0, 1, 100, 200), 0.1);
 
 	cap.loadPixels();
-	const bayer_n = bayer_n_selector.selected();
-	const color_mode = color_mode_selector.selected();
-	let i, r, g, b, mono, bayer_value;
+	const bayerN = bayerNSelector.selected();
+	const colorMode = colorModeSelector.selected();
+	let i, r, g, b, mono, bayerValue;
 
 	for (let x = 0; x < w; x++)
 		for (let y = 0; y < h; y++) {
@@ -95,14 +95,14 @@ function draw() {
 			b = cap.pixels[i + 2];
 
 			let originalMono = (r + g + b) / 3;
-			if (color_mode == 'CIELAB') mono = Lstar(r, g, b);
-			else if (color_mode == "Y'CbCr") mono = lum(r, g, b);
-			else if (color_mode == 'HSV') mono = max(r, g, b);
-			else if (color_mode == 'HSL') mono = (max(r, g, b) + min(r, g, b)) / 2;
+			if (colorMode == 'CIELAB') mono = Lstar(r, g, b);
+			else if (colorMode == "Y'CbCr") mono = lum(r, g, b);
+			else if (colorMode == 'HSV') mono = max(r, g, b);
+			else if (colorMode == 'HSL') mono = (max(r, g, b) + min(r, g, b)) / 2;
 			else mono = originalMono; // 'HSI'
 
-			bayer_value = bayer_matrix[bayer_n][y % bayer_n][x % bayer_n];
-			if (mono + bayer_r * bayer_value >= bayer_threshold) {
+			bayerValue = bayerMatrix[bayerN][y % bayerN][x % bayerN];
+			if (mono + bayerR * bayerValue >= bayerThreshold) {
 				r = 237;
 				g = 230;
 				b = 205;
@@ -124,6 +124,6 @@ function draw() {
 	rect(w - 25, 22 - 15, 21, 15);
 	rect(w - 25, 49 - 15, 21, 15);
 	fill(0);
-	text(int(bayer_r), w - 5, 19);
-	text(int(bayer_threshold), w - 5, 46);
+	text(int(bayerR), w - 5, 19);
+	text(int(bayerThreshold), w - 5, 46);
 }
