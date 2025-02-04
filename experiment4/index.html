@@ -5,8 +5,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 
 	<!-- Load p5.sound.js library -->
-	<script src="https://cdn.jsdelivr.net/npm/p5.sound@1.0.0/lib/p5.sound.js" defer></script>
-
+	<script src="https://cdn.jsdelivr.net/npm/p5.sound@1.0.0/lib/p5.sound.js"></script>
 
 	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
 	<script type="text/javascript" src="../js/site.js" defer></script>
@@ -31,6 +30,9 @@
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
         crossorigin="anonymous"></script>
 
+	<!-- Optional: Add this meta tag for better compatibility -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
 </head>
 <body>
 	<main id="content">
@@ -42,7 +44,7 @@
 					<!-- The canvas will be inserted here by p5.js -->
 				</div>
 				<div class="fullscreen-box">
-					<button id="fullscreenButton">Fullscreen</button> <!-- Renamed from fullscreen to fullscreenButton -->
+					<button id="fullscreenButton" aria-label="Fullscreen">Fullscreen</button> <!-- Renamed from fullscreen to fullscreenButton -->
 				</div>
 			</div>
 
@@ -71,5 +73,21 @@
 	</main>
 
 	<!-- Optional: Add any additional footer or script tags here -->
+	
+	<!-- Fullscreen Script -->
+	<script>
+		document.getElementById('fullscreenButton').addEventListener('click', () => {
+			const elem = document.documentElement; // or #canvas-container
+			if (elem.requestFullscreen) {
+				elem.requestFullscreen();
+			} else if (elem.mozRequestFullScreen) { // Firefox
+				elem.mozRequestFullScreen();
+			} else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+				elem.webkitRequestFullscreen();
+			} else if (elem.msRequestFullscreen) { // IE/Edge
+				elem.msRequestFullscreen();
+			}
+		});
+	</script>
 </body>
 </html>
