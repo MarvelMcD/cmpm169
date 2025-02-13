@@ -1,79 +1,119 @@
-// sketch.js - purpose and description here
-// Author: Your Name
-// Date:
+import * as THREE from "//cdn.skypack.dev/three@0.134?min";
+import { OrbitControls } from "//cdn.skypack.dev/three@0.134/examples/jsm/controls/OrbitControls?min";
+import * as CANNON from "https://unpkg.com/cannon-es@0.19.0/dist/cannon-es.js";
 
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
+// code adapted from https://youtu.be/mTPDaw2piKg?si=vCytVFk7uFO2v2IT
 
-// Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
-const VALUE1 = 1;
-const VALUE2 = 2;
+// Renderer Setup
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-// Globals
-let myInstance;
-let canvasContainer;
-var centerHorz, centerVert;
+// Scene & Camera Setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 4, 10);
 
-class MyClass {
-    constructor(param1, param2) {
-        this.property1 = param1;
-        this.property2 = param2;
-    }
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.update();
 
-    myMethod() {
-        // code to run when method is called
-    }
-}
+// Lighting
+const ambientLight = new THREE.AmbientLight(0x333333);
+scene.add(ambientLight);
 
-function resizeScreen() {
-  centerHorz = canvasContainer.width() / 2; // Adjusted for drawing logic
-  centerVert = canvasContainer.height() / 2; // Adjusted for drawing logic
-  console.log("Resizing...");
-  resizeCanvas(canvasContainer.width(), canvasContainer.height());
-  // redrawCanvas(); // Redraw everything based on new size
-}
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(0, 50, 0);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+scene.add(directionalLight);
 
-// setup() function is called once when the program starts
-function setup() {
-  // place our canvas, making it fit our container
-  canvasContainer = $("#canvas-container");
-  let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
-  canvas.parent("canvas-container");
-  // resize canvas is the page is resized
+// Physics World Setup
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) });
 
-  // create an instance of the class
-  myInstance = new MyClass("VALUE1", "VALUE2");
+// Ground Plane
+const planeGeo = new THREE.PlaneGeometry(10, 10);
+const planeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+planeMesh.receiveShadow = true;
+scene.add(planeMesh);
 
-  $(window).resize(function() {
-    resizeScreen();
+const planePhysMat = new CANNON.Material();
+const planeBody = new CANNON.Body({
+  type: CANNON.Body.STATIC,
+  shape: new CANNON.Box(new CANNON.Vec3(5, 5, 0.001)),
+  material: planePhysMat,
+});
+planeBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+world.addBody(planeBody);
+
+// Mouse Interaction Setup
+const mouse = new THREE.Vector2();
+const intersectionPoint = new THREE.Vector3();
+const planeNormal = new THREE.Vector3();
+const plane = new THREE.Plane();
+const raycaster = new THREE.Raycaster();
+
+window.addEventListener("mousemove", (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  planeNormal.copy(camera.position).normalize();
+  plane.setFromNormalAndCoplanarPoint(planeNormal, scene.position);
+  raycaster.setFromCamera(mouse, camera);
+  raycaster.ray.intersectPlane(plane, intersectionPoint);
+});
+
+const meshes = [];
+const bodies = [];
+
+window.addEventListener("click", () => {
+  const sphereGeo = new THREE.SphereGeometry(0.125, 30, 30);
+  const sphereMat = new THREE.MeshStandardMaterial({
+    color: Math.random() * 0xffffff,
+    metalness: 0,
+    roughness: 0,
   });
-  resizeScreen();
+  const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+  sphereMesh.castShadow = true;
+  scene.add(sphereMesh);
+
+  const spherePhysMat = new CANNON.Material();
+  const sphereBody = new CANNON.Body({
+    mass: 0.3,
+    shape: new CANNON.Sphere(0.125),
+    position: new CANNON.Vec3(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z),
+    material: spherePhysMat,
+  });
+  world.addBody(sphereBody);
+
+  world.addContactMaterial(new CANNON.ContactMaterial(planePhysMat, spherePhysMat, { restitution: 0.3 }));
+
+  meshes.push(sphereMesh);
+  bodies.push(sphereBody);
+});
+
+// Animation Loop
+const timestep = 1 / 60;
+function animate() {
+  world.step(timestep);
+
+  planeMesh.position.copy(planeBody.position);
+  planeMesh.quaternion.copy(planeBody.quaternion);
+
+  for (let i = 0; i < meshes.length; i++) {
+    meshes[i].position.copy(bodies[i].position);
+    meshes[i].quaternion.copy(bodies[i].quaternion);
+  }
+
+  renderer.render(scene, camera);
 }
 
-// draw() function is called repeatedly, it's the main animation loop
-function draw() {
-  background(220);    
-  // call a method on the instance
-  myInstance.myMethod();
+renderer.setAnimationLoop(animate);
 
-  // Set up rotation for the rectangle
-  push(); // Save the current drawing context
-  translate(centerHorz, centerVert); // Move the origin to the rectangle's center
-  rotate(frameCount / 100.0); // Rotate by frameCount to animate the rotation
-  fill(234, 31, 81);
-  noStroke();
-  rect(-125, -125, 250, 250); // Draw the rectangle centered on the new origin
-  pop(); // Restore the original drawing context
-
-  // The text is not affected by the translate and rotate
-  fill(255);
-  textStyle(BOLD);
-  textSize(140);
-  text("p5*", centerHorz - 105, centerVert + 40);
-}
-
-// mousePressed() function is called once after every time a mouse button is pressed
-function mousePressed() {
-    // code to run when mouse is pressed
-}
+// Handle Window Resize
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
