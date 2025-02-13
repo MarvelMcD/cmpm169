@@ -113,13 +113,23 @@ window.addEventListener("click", () => {
     position: new CANNON.Vec3(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z),
     material: spherePhysMat,
   });
+
+  // Apply random velocity for varied bounce angles
+  sphereBody.velocity.set(
+    (Math.random() - 0.5) * 3, // X velocity (random left/right)
+    Math.random() * 5,         // Y velocity (random upward push)
+    (Math.random() - 0.5) * 3  // Z velocity (random forward/backward)
+  );
+
   world.addBody(sphereBody);
 
-  world.addContactMaterial(new CANNON.ContactMaterial(planePhysMat, spherePhysMat, { restitution: 0.3 }));
+  // Increase restitution (bounciness)
+  world.addContactMaterial(new CANNON.ContactMaterial(planePhysMat, spherePhysMat, { restitution: 0.8 }));
 
   meshes.push(sphereMesh);
   bodies.push(sphereBody);
 });
+
 
 // Animation Loop
 const timestep = 1 / 60;
