@@ -2,7 +2,7 @@ import * as THREE from "//cdn.skypack.dev/three@0.134?min";
 import { OrbitControls } from "//cdn.skypack.dev/three@0.134/examples/jsm/controls/OrbitControls?min";
 import * as CANNON from "https://unpkg.com/cannon-es@0.19.0/dist/cannon-es.js";
 
-// code adapted from https://youtu.be/mTPDaw2piKg?si=vCytVFk7uFO2v2IT
+// code adapted from https://youtu.be/mTPDaw2piKg?si=HaLamPNp7Q313lxA
 
 // Renderer Setup
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -25,14 +25,12 @@ scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(0, 50, 0);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 1024;
-directionalLight.shadow.mapSize.height = 1024;
 scene.add(directionalLight);
 
 // Physics World Setup
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) });
 
-// Ground Plane
+// Ground Plane (Visible)
 const planeGeo = new THREE.PlaneGeometry(10, 10);
 const planeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
 const planeMesh = new THREE.Mesh(planeGeo, planeMat);
@@ -47,6 +45,36 @@ const planeBody = new CANNON.Body({
 });
 planeBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
 world.addBody(planeBody);
+
+// Create Invisible Box Walls
+function createWall(position, size) {
+  // Create an invisible material
+  const wallMat = new THREE.MeshStandardMaterial({ visible: false });
+
+  // Create the wall mesh (invisible)
+  const wallGeo = new THREE.BoxGeometry(size.x * 2, size.y * 2, size.z * 2);
+  const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+  wallMesh.position.set(position.x, position.y, position.z);
+  scene.add(wallMesh);
+
+  // Create the physics body (keeps collisions active)
+  const wallBody = new CANNON.Body({
+    type: CANNON.Body.STATIC,
+    shape: new CANNON.Box(new CANNON.Vec3(size.x, size.y, size.z)),
+  });
+  wallBody.position.set(position.x, position.y, position.z);
+  world.addBody(wallBody);
+}
+
+// Define the box boundaries
+const boxSize = { width: 5, height: 5, depth: 5 };
+
+createWall({ x: 0, y: -boxSize.height, z: 0 }, { x: boxSize.width, y: 0.1, z: boxSize.depth }); // Bottom
+createWall({ x: 0, y: boxSize.height, z: 0 }, { x: boxSize.width, y: 0.1, z: boxSize.depth }); // Top
+createWall({ x: -boxSize.width, y: 0, z: 0 }, { x: 0.1, y: boxSize.height, z: boxSize.depth }); // Left
+createWall({ x: boxSize.width, y: 0, z: 0 }, { x: 0.1, y: boxSize.height, z: boxSize.depth }); // Right
+createWall({ x: 0, y: 0, z: -boxSize.depth }, { x: boxSize.width, y: boxSize.height, z: 0.1 }); // Back
+createWall({ x: 0, y: 0, z: boxSize.depth }, { x: boxSize.width, y: boxSize.height, z: 0.1 }); // Front
 
 // Mouse Interaction Setup
 const mouse = new THREE.Vector2();
