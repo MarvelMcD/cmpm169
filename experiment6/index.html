@@ -20,32 +20,26 @@
 	<!-- Load p5.js library -->
 	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 
-	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
+	<!-- Link to JavaScript files - DEFER waits until all elements are rendered -->
     <script type="text/javascript" src="../js/site.js" DEFER></script>
-	<!-- Use me for a JavaScript OOP Project -->
-	<script type="text/javascript" src="./js/project.js" DEFER></script>
-	<!-- Use me for a p5.js project -->
 	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
 </head>
 <body>
-	<!-- Style this page by changing the CSS in ../css/site.css or css/experiment.css -->
+	<!-- Style this page by changing the CSS in ../css/site.css or css/style.css -->
 	<main id="content">
 		<section>
-
 			<h1>Experiment 6 - Grammars & Text Art</h1>
 
+			<!-- Generate Button and Output Box -->
 			<div class="minor-section">
-				<div id="canvas-container">
-					<!-- canvas will be added here -->
-				</div>
-                <div class="fullscreen-box">
-                    <button id="fullscreen">Fullscreen</button>
-                </div>
+				<h2>Generate Your Strat</h2>
+				<button id="clicker">Generate Strat</button>
+				<p id="box"></p>
 			</div>
 
 			<div class="minor-section">
 				<h2>Description</h2>
-				<p>Grammer generation for CounterStrike strats.</p>
+				<p>Grammar generation for Counter-Strike strats.</p>
 			</div>
 
 			<div class="minor-section">
@@ -55,12 +49,12 @@
 
 			<div class="minor-section">
 				<h2>Reflection</h2>
-				<p>This experiment is an improved version of an experiment for another class. This version is better than the previous.</p>
+				<p>This experiment is an improved version of an experiment for another class.</p>
 			</div>
-
 		</section>
+
+		<!-- Navigation Links -->
 		<nav id="links" class="minor-section">
-			<!-- Put link back to homepage here. -->
             <ul>
                 <li><a href="../index.html">Home</a></li>
             </ul>
