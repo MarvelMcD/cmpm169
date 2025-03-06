@@ -1,11 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+	<!-- Load p5.js library -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.js"></script>
+
+	<!-- Load p5.sound.js library -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/addons/p5.sound.min.js"></script> 
+
+	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
+	<script type="text/javascript" src="../js/site.js" defer></script>
+	<script type="text/javascript" src="./js/project.js" defer></script>
+	<script type="text/javascript" src="./js/sketch.js" defer></script>
+
 	<!-- This title is used for tabs and bookmarks -->
-	<title>Experiment X - Subject/Topic</title>
+	<title>Experiment 7 - Data Visualization & Networks</title>
 
 	<!-- Use UTF character set, a good idea with any webpage -->
 	<meta charset="UTF-8" />
+
 	<!-- Set viewport so page remains consistently scaled w narrow devices -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -17,48 +29,40 @@
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
         crossorigin="anonymous"></script>
-	<!-- Load p5.js library -->
-	<script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.js"></script>
 
-	<!-- Link to javascript files - DEFER waits until all elements are rendered -->
-    <script type="text/javascript" src="../js/site.js" DEFER></script>
-	<!-- Use me for a JavaScript OOP Project -->
-	<script type="text/javascript" src="./js/project.js" DEFER></script>
-	<!-- Use me for a p5.js project -->
-	<script type="text/javascript" src="./js/sketch.js" DEFER></script>
+	<!-- Optional: Add this meta tag for better compatibility -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 </head>
 <body>
-	<!-- Style this page by changing the CSS in ../css/site.css or css/experiment.css -->
 	<main id="content">
 		<section>
-
-			<h1>Experiment X - Subject/Topic</h1>
+			<h1>Experiment 7 - Data Visualization & Networks</h1>
 
 			<div class="minor-section">
 				<div id="canvas-container">
-					<!-- canvas will be added here -->
+					<!-- The canvas will be inserted here by p5.js -->
 				</div>
-                <div class="fullscreen-box">
-                    <button id="fullscreen">Fullscreen</button>
-                </div>
+				<div class="fullscreen-box">
+					<button id="fullscreenButton" aria-label="Fullscreen">Fullscreen</button> <!-- Renamed from fullscreen to fullscreenButton -->
+				</div>
 			</div>
 
 			<div class="minor-section">
 				<h2>Description</h2>
-				<p>What are you trying to acomplish with this experiment?</p>
+				<p>Mic Data represented in a visualizer. You can click and drag the mouse up and down to move the visualization around, even looping it around.</p>
 			</div>
 
 			<div class="minor-section">
 				<h2>Technical</h2>
-				<p>Describe in detail what you did technically and how it works?</p>
+				<p>This experiment takes in microphone data to produce a visualization.</p>
 			</div>
 
 			<div class="minor-section">
 				<h2>Reflection</h2>
-				<p>Each person that worked on the code should reflect on the process, the difficulties, and the successes of the experiment.</p>
+				<p>Everything is working as intended besides the full screen and the container for the canvas.</p>
 			</div>
-
 		</section>
+
 		<nav id="links" class="minor-section">
 			<!-- Put link back to homepage here. -->
             <ul>
@@ -66,5 +70,23 @@
             </ul>
 		</nav>
 	</main>
+
+	<!-- Optional: Add any additional footer or script tags here -->
+	
+	<!-- Fullscreen Script -->
+	<script>
+		document.getElementById('fullscreenButton').addEventListener('click', () => {
+			const elem = document.documentElement; // or #canvas-container
+			if (elem.requestFullscreen) {
+				elem.requestFullscreen();
+			} else if (elem.mozRequestFullScreen) { // Firefox
+				elem.mozRequestFullScreen();
+			} else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+				elem.webkitRequestFullscreen();
+			} else if (elem.msRequestFullscreen) { // IE/Edge
+				elem.msRequestFullscreen();
+			}
+		});
+	</script>
 </body>
 </html>
